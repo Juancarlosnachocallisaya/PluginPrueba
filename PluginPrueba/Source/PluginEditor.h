@@ -10,11 +10,12 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "Medidor/Medidor.h"
 
 //==============================================================================
 /**
 */
-class PluginPruebaAudioProcessorEditor  : public juce::AudioProcessorEditor
+class PluginPruebaAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::Timer
 {
 public:
     PluginPruebaAudioProcessorEditor (PluginPruebaAudioProcessor&);
@@ -23,10 +24,14 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
+    void timerCallback() override;
 
 private:
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
+    
+    LevelMeter2 MedidorOUTL, MedidorOUTR;
+
+    LevelMeter2 MedidorINL, MedidorINR;
+
     PluginPruebaAudioProcessor& audioProcessor;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginPruebaAudioProcessorEditor)

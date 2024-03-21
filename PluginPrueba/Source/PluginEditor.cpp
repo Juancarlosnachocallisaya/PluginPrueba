@@ -13,14 +13,42 @@
 PluginPruebaAudioProcessorEditor::PluginPruebaAudioProcessorEditor (PluginPruebaAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
+    addAndMakeVisible(MedidorOUTL);
+    addAndMakeVisible(MedidorOUTR);
+
+    addAndMakeVisible(MedidorINL);
+    addAndMakeVisible(MedidorINR);
+
+
+
     setSize (400, 300);
+    startTimerHz(25);
 }
 
 PluginPruebaAudioProcessorEditor::~PluginPruebaAudioProcessorEditor()
 {
 }
+
+void PluginPruebaAudioProcessorEditor::timerCallback()
+
+{
+    MedidorINL.setlevel(audioProcessor.getRmsValue(0));
+    MedidorINR.setlevel(audioProcessor.getRmsValue(1));
+
+
+    MedidorINL.repaint();
+    MedidorINR.repaint();
+
+
+
+    MedidorOUTL.setlevel(audioProcessor.getRmsValue(0));
+    MedidorOUTR.setlevel(audioProcessor.getRmsValue(1));
+
+    MedidorOUTL.repaint();
+    MedidorOUTR.repaint();
+    
+}
+
 
 //==============================================================================
 void PluginPruebaAudioProcessorEditor::paint (juce::Graphics& g)
@@ -35,6 +63,11 @@ void PluginPruebaAudioProcessorEditor::paint (juce::Graphics& g)
 
 void PluginPruebaAudioProcessorEditor::resized()
 {
-    // This is generally where you'll want to lay out the positions of any
-    // subcomponents in your editor..
+    MedidorOUTL.setBounds(250, 100, 150, 15);
+    MedidorOUTR.setBounds(250, 135, 150, 15);
+
+ 
+
+   MedidorINL.setBounds(100, 100, 150, 15);
+   MedidorINR.setBounds(100, 135, 150, 15);
 }

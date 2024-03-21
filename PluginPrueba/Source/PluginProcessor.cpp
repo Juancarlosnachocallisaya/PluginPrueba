@@ -20,13 +20,22 @@ PluginPruebaAudioProcessor::PluginPruebaAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ),apvts (*this,nullptr,"PARAMETERS",createparameters())
 #endif
 {
 }
 
 PluginPruebaAudioProcessor::~PluginPruebaAudioProcessor()
 {
+}
+
+juce::AudioProcessorValueTreeState::ParameterLayout PluginPruebaAudioProcessor::createparameters()
+{
+    juce::AudioProcessorValueTreeState::ParameterLayout params;
+
+    params.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{ "Gain",1 }, "Gain", -60.0f,60.0f,0.0f));
+
+    return params;
 }
 
 //==============================================================================
@@ -94,8 +103,12 @@ void PluginPruebaAudioProcessor::changeProgramName (int index, const juce::Strin
 //==============================================================================
 void PluginPruebaAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    juce::dsp::ProcessSpec spec{};
+    spec.sampleRate = sampleRate;
+    spec.maximumBlockSize = samplesPerBlock;
+    spec.numChannels = getTotalNumInputChannels();
+
+    Gain.prepare(spec);
 }
 
 void PluginPruebaAudioProcessor::releaseResources()
@@ -136,26 +149,26 @@ void PluginPruebaAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
+    
+    levelMeterINleft2 = juce::Decibels::gainToDecibels(buffer.getRMSLevel(0, 0, buffer.getNumSamples()));
+    levelMeterINright2 = juce::Decibels::gainToDecibels(buffer.getRMSLevel(1, 0, buffer.getNumSamples()));
+    
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
+   
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
 
-        // ..do something to the data...
+      levelMeterINleft =juce::Decibels::gainToDecibels(buffer.getRMSLevel(0, 0, buffer.getNumSamples()));
+      levelMeterINright =juce::Decibels::gainToDecibels(buffer.getRMSLevel(1, 0, buffer.getNumSamples()));
+
+      auto audioblock = juce::dsp::AudioBlock<float>(buffer);
+      auto context = juce::dsp::ProcessContextReplacing<float>(audioblock);
+
+      Gain.setGainDecibels(apvts.getRawParameterValue("Gain")->load());
+      
+      Gain.process(context);
+
     }
 }
 
@@ -183,6 +196,28 @@ void PluginPruebaAudioProcessor::setStateInformation (const void* data, int size
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
 }
+
+float PluginPruebaAudioProcessor::getRmsValue(const int channel) const
+
+{
+
+    jassert(channel == 0 || channel == 1);
+    if (channel == 0)
+        return levelMeterINleft;
+    if (channel == 1)
+        return levelMeterINright;
+}
+
+float PluginPruebaAudioProcessor::getRmsValue2(const int channel) const
+{
+    jassert(channel == 0 || channel == 1);
+    if (channel == 0)
+        return levelMeterINleft2;
+    if (channel == 1)
+        return levelMeterINright2;
+
+}
+
 
 //==============================================================================
 // This creates new instances of the plugin..

@@ -14,9 +14,7 @@
 /**
 */
 class PluginPruebaAudioProcessor  : public juce::AudioProcessor
-                            #if JucePlugin_Enable_ARA
-                             , public juce::AudioProcessorARAExtension
-                            #endif
+                          
 {
 public:
     //==============================================================================
@@ -55,8 +53,22 @@ public:
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
+    float getRmsValue(const int channel) const;
+    float getRmsValue2(const int channel) const;
+
+    juce::AudioProcessorValueTreeState apvts;
+    juce::AudioProcessorValueTreeState::ParameterLayout createparameters();
+
+    juce::dsp::Gain<float> Gain;
+    
 
 private:
+
+    float levelMeterINleft, levelMeterINright;
+    float levelMeterINleft2, levelMeterINright2;
+
+    
+
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginPruebaAudioProcessor)
 };
